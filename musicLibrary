@@ -1,0 +1,410 @@
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <cstdlib>
+#include <ctime>
+
+using namespace std;
+
+const int MAX_CAPACITY = 5000;
+
+struct Song 
+{
+  string title;
+  string artist;
+  int releaseYear;
+  int playCount;
+};
+
+// --- PROVIDED STARTER FUNCTIONS ---
+/**
+ * @brief Populates an array of songs with randomized data.
+ *
+ * Combines randomly chosen prefix and suffix words to construct titles,
+ * assigns artist names, generates release years (1950-2024), and random
+ * play counts (0-10,000).
+ *
+ * @param  library  The array of Song structures to populate.
+ * @param  size     The number of random song entries to generate.
+ * @param  seed     Optional seed for random generator (default 0 = time(0)).
+ * @note   Overwrites existing entries from index 0 to size - 1.
+ */
+void generateRandomLibrary(Song library[], int size, unsigned int seed = 0) 
+{
+  if (seed == 0)
+    srand(time(0));
+  else
+    srand(seed);
+
+  const int GENERATION_SIZE = 8;
+
+  const string prefixes[GENERATION_SIZE] = 
+  {
+    "Electric", "Midnight", "Acoustic", "Neon", 
+    "Cosmic", "Silent", "Golden", "Urban"
+  };
+  const string suffixes[GENERATION_SIZE] = 
+  {
+    "Groove", "Serenade", "Echo", "Dreams", 
+    "Rhythm", "Vibes", "Melody", "Symphony"
+  };
+  const string artists[GENERATION_SIZE]  = 
+  {
+    "The Waves", "Synthetics", "Luna & The Band", "Pulse",
+    "Starlight", "Echoes", "The Police", "The Comets"
+  };
+
+  for (int i = 0; i < size; i++) 
+  {
+    string p = prefixes[rand() % GENERATION_SIZE];
+    string s = suffixes[rand() % GENERATION_SIZE];
+    library[i].title = p + " " + s;
+    library[i].artist = artists[rand() % GENERATION_SIZE];
+    library[i].releaseYear = 1950 + (rand() % 75);
+    library[i].playCount = rand() % 10001;
+  }
+}
+
+
+/**
+ * @brief Prompts the user to manually enter details for a single song.
+ *
+ * Reads title, artist, release year, and play count from standard input
+ * and appends the new song to the library array.
+ *
+ * @param  library   The array of Song structures where new song is stored.
+ * @param  size      Reference to current song count (incremented on success).
+ * @param  capacity  Maximum capacity limit of the array.
+ * @note   Does nothing if current size is greater than or equal to capacity.
+ */
+void inputSongData(Song library[], int &size, int capacity) 
+{
+  if (size >= capacity) 
+  {
+    cout << "Library is full! Cannot add more songs." << endl;
+    return;
+  }
+  cout << "Enter Song Title: ";
+  cin.ignore(); // Ignore whitespace from menu option
+  getline(cin, library[size].title);
+  cout << "Enter Artist Name: ";
+  getline(cin, library[size].artist);
+  cout << "Enter Release Year: ";
+  cin >> library[size].releaseYear;
+  cout << "Enter Play Count: ";
+  cin >> library[size].playCount;
+  size++;
+  cout << "Song added successfully!" << endl;
+}
+
+// --- IMPLEMENT FUNCTIONS HERE ---
+
+void printLibrary(const Song library[], int size)
+{
+  if (size == 0)
+  {
+    cout << "Library is currently empty." << endl;
+    return;
+  }
+
+  cout << left << setw(30) << "Title" << left << setw(20) << "Artist" <<
+  right << setw(15) << "Release Year" << right <<setw(15) << "Play Count" << endl;
+
+  cout << string(80, '-') << endl;
+
+  for (int i = 0; i < size; i++)
+  {
+    cout << left << setw(30) << library[i].title <<
+    left << setw(20) << library[i].artist << right <<
+    setw(15) << library[i].releaseYear << setw(15) <<
+    library[i].playCount << endl;
+  }
+
+  cout << string(80, '-') << endl;
+  cout << "Total Songs: " << size << endl;
+
+}
+
+int linearSearchByTitle(const Song library[], int size, string targetTitle, int &comparisons)
+{
+  comparisons = 0;
+
+  for (int i = 0; i < size; i++)
+  {
+    comparisons++;
+
+    if (library[i].title == targetTitle)
+    {
+      return i;
+    }
+  }
+
+  return -1;
+
+}
+
+int binarySearchByTitle(const Song library[], int size, string targetTitle, int &comparisons)
+{
+  comparisons = 0;
+
+  int low = 0;
+  int high = size - 1;
+
+  while (low <= high)
+  {
+    int middle = low + (high - low) / 2;
+
+    comparisons++;
+
+    if (library[middle].title == targetTitle)
+    {
+      return middle;
+    }
+    else if (library[middle].title < targetTitle)
+    {
+      low = middle + 1;
+    }
+    else
+    {
+      high = middle - 1;
+    }
+  }
+
+  return -1;
+
+}
+
+void selectionSortByTitle(Song library[], int size, int &comparisons)
+{
+  comparisons = 0;
+
+  for (int i = 0; i < size - 1; i++)
+  {
+    int minimumIndex = i;
+
+    for (int j = i + 1; j < size; j++)
+    {
+      comparisons++;
+
+      if (library[j].title < library[minimumIndex].title)
+      {
+        minimumIndex = j;
+      }
+    }
+
+    if (minimumIndex != i)
+    {
+      Song tempoarySong = library[i];
+      library[i] = library[minimumIndex];
+      library[minimumIndex] = tempoarySong;
+    }
+  }
+}
+
+void insertionSortByPlayCount(Song library[], int size, int &comparisons)
+{
+  comparisons = 0;
+
+  for (int i = 1; i < size; i++)
+  {
+    Song currentSong = library[i];
+    int j = i - 1;
+
+    while (j >= 0)
+    {
+      comparisons++;
+
+      if (library[j].playCount < currentSong.playCount)
+      {
+        library[j + 1] = library[j];
+        j--;
+      }
+      else
+      {
+        break;
+      }
+    }
+
+    library[j + 1] = currentSong;
+  }
+}
+
+void displayAnalysisReport(string algorithmName, int datasetSize, int comparisons)
+
+{
+  cout << "========================================" << endl;
+  cout << "       ALGORITHM PERFORMANCE REPORT" << endl;
+  cout << "========================================" << endl;
+  cout << "Algorithm Tested: " << algorithmName << endl;
+  cout << "Dataset Size (n): " << datasetSize << endl;
+  cout << "Comparisons Made: " << comparisons << endl;
+  cout << "========================================" << endl;
+}
+
+int main() 
+{
+  Song library[MAX_CAPACITY];
+  int currentSize = 0;
+  bool isSortedByTitle = false;
+  int choice;
+
+  // User menu
+  cout << "\n=== MUSIC LIBRARY MANAGEMENT SYSTEM ===\n";
+  cout << "1. Generate Random Library\n";
+  cout << "2. Display Library\n";
+  cout << "3. Search for Song by Title (Linear Search)\n";
+  cout << "4. Sort Library by Title (Selection Sort)\n";
+  cout << "5. Search for Song by Title (Binary Search)\n";
+  cout << "6. Sort Library by Play Count (Insertion Sort)\n";
+  cout << "7. Exit\n";
+
+  do 
+  {
+    // User input with safety check built in.
+    if(cout << "\nEnter choice: " && !(cin >> choice)) 
+    {
+      cout << "Killing program due to bad input" << endl;
+      return -1;
+    }
+
+    switch (choice)
+    {
+      case 1:
+      {
+        int seed;
+        int numberOfSongs;
+
+        cout << "Enter seed (0 for no seed): ";
+        cin >> seed;
+
+        cout << "Enter number of songs to generate (max 5000): ";
+        cin >> numberOfSongs;
+
+        if (numberOfSongs < 0 || numberOfSongs > MAX_CAPACITY)
+        {
+          cout << "Invalid library size." << endl;
+        }
+        else
+        {
+          generateRandomLibrary(library, numberOfSongs, seed);
+
+          currentSize = numberOfSongs;
+          isSortedByTitle = false;
+
+          cout << currentSize << " songs generated!" << endl;
+        }
+
+        break;
+      }
+
+      case 2:
+      {
+        printLibrary(library, currentSize);
+        break;
+      }
+
+      case 3:
+      {
+        string targetTitle;
+        int comparisons;
+        int index;
+
+        cout << "Enter target title: ";
+        cin.ignore();
+        getline(cin, targetTitle);
+
+        index = linearSearchByTitle(library, currentSize, targetTitle, comparisons);
+
+        if (index == -1)
+        {
+          cout << "Song not found." << endl;
+        }
+        else
+        {
+          cout << "Song found at index " << index << "!" << endl;
+        }
+
+        displayAnalysisReport("Linear Search", currentSize, comparisons);
+        
+        break;
+      }
+
+      case 4:
+      {
+        int comparisons;
+
+        selectionSortByTitle(library, currentSize, comparisons);
+        isSortedByTitle = true;
+
+        cout << "Library sorted by Title (Selection Sort)." << endl;
+
+        displayAnalysisReport("Selection Sort", currentSize, comparisons);
+
+        break;
+      }
+
+      case 5:
+      {
+        string targetTitle;
+        int comparisons;
+        int index;
+
+        if (!isSortedByTitle)
+        {
+          cout << "WARNING: Binary Search needs array sorted by Title first!\n";
+          cout << "Run Option 4 (Selection Sort) before Binary Search.\n"; 
+        }
+        else
+        {
+          cout << "Enter target title: ";
+          cin.ignore();
+          getline(cin, targetTitle);
+
+          index = binarySearchByTitle(library, currentSize, targetTitle, comparisons);
+
+          if (index == -1)
+          {
+            cout << "Song not found." << endl;
+          }
+          else
+          {
+            cout << "Song found at index " << index << "!" << endl;
+          }
+
+          displayAnalysisReport("Binary Search", currentSize, comparisons);
+        }
+
+        break;
+      }
+
+      case 6:
+      {
+        int comparisons;
+
+        insertionSortByPlayCount(library, currentSize, comparisons);
+        isSortedByTitle = false;
+
+        cout << "Library sorted by Play Count (Insertion Sort)." << endl;
+
+        displayAnalysisReport("Insertion Sort", currentSize, comparisons);
+
+        break;
+      }
+
+      case 7:
+      {
+        break;
+      }
+
+      default:
+      {
+        cout << "Invalid choice. Please try again." << endl;
+        break;
+      }
+    }
+
+  } while (choice != 7);
+
+  cout << "Goodbye!" << endl;
+  return 0;
+}
